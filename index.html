@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sudoku Solver</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+    * {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #121212;
+  color: #f5f5f5;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  min-height: 100vh;
+  margin: 0;
+}
+
+h1 {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 2rem;
+}
+
+.sudoku-board {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 5px;
+  margin: 20px 0;
+}
+
+.sudoku-board input {
+  width: 40px;
+  height: 40px;
+  text-align: center;
+  font-size: 1.2rem;
+  background-color: #1e1e1e;
+  color: #fff;
+  border: 2px solid #333;
+  border-radius: 5px;
+}
+
+.buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  background-color: #03DAC6;
+  color: #121212;
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: background-color 0.3s;
+}
+
+button i {
+  font-size: 1.2rem;
+}
+
+button:hover {
+  background-color: #018786;
+}
+
+footer {
+  margin-top: 20px;
+  padding: 10px;
+  text-align: center;
+  background-color: #03DAC6;
+  color: #121212;
+  width: 100%;
+  position: absolute;
+  bottom: 0;
+}
+
+/* Dark Mode */
+body.dark-mode {
+  background-color: #121212;
+  color: #f5f5f5;
+}
+
+body.dark-mode button {
+  background-color: #03DAC6;
+}
+
+body.dark-mode input {
+  background-color: #1e1e1e;
+  color: white;
+}
+
+</style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Sudoku Solver By Technical Dippan..</h1>
+    <div class="sudoku-board" id="sudoku-board">
+      <!-- Dynamic Sudoku Board will be generated here -->
+    </div>
+
+    <!-- Buttons -->
+    <div class="buttons">
+      <button id="solveBtn"><i class="fas fa-play"></i> Solve</button>
+      <button id="clearBtn"><i class="fas fa-eraser"></i> Clear</button>
+      <button id="reloadBtn"><i class="fas fa-sync"></i> Reload</button>
+      <button id="shareBtn"><i class="fas fa-share"></i> Share</button>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p>© Technical Dippan|All Rights Reserved | Created with Love ❤️</p>
+  </footer>
+
+  <script>document.addEventListener("DOMContentLoaded", function () {
+  const board = document.getElementById('sudoku-board');
+
+  // Function to generate Sudoku board
+  function generateBoard() {
+    for (let i = 0; i < 81; i++) {
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.min = 1;
+      input.max = 9;
+      input.addEventListener('input', function () {
+        // Allow only one digit between 1-9
+        this.value = this.value.slice(0, 1).replace(/[^1-9]/g, '');
+      });
+      board.appendChild(input);
+    }
+  }
+
+  generateBoard();
+
+  const solveBtn = document.getElementById('solveBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const reloadBtn = document.getElementById('reloadBtn');
+  const shareBtn = document.getElementById('shareBtn');
+
+  // Simple Sudoku Solver (Backtracking)
+  function solveSudoku(board) {
+    const inputs = board.querySelectorAll('input');
+    let grid = Array.from(inputs).map(input => input.value === "" ? 0 : parseInt(input.value));
+    
+    function isValid(board, row, col, num) {
+      for (let x = 0; x < 9; x++) {
+        if (board[row * 9 + x] == num || board[x * 9 + col] == num) return false;
+        if (board[~~(row / 3) * 27 + ~~(col / 3) * 3 + (x % 3) + 9 * ~~(x / 3)] == num) return false;
+      }
+      return true;
+    }
+
+    function solve(board, row = 0, col = 0) {
+      if (col == 9) col = 0, row++;
+      if (row == 9) return true;
+      if (board[row * 9 + col]) return solve(board, row, col + 1);
+      for (let num = 1; num <= 9; num++) {
+        if (isValid(board, row, col, num)) {
+          board[row * 9 + col] = num;
+          if (solve(board, row, col + 1)) return true;
+          board[row * 9 + col] = 0;
+        }
+      }
+      return false;
+    }
+
+    solve(grid);
+    grid.forEach((num, i) => inputs[i].value = num || "");
+  }
+
+  // Solve Button Action
+  solveBtn.addEventListener('click', function () {
+    solveSudoku(board);
+  });
+
+  // Clear Button Action
+  clearBtn.addEventListener('click', function () {
+    board.querySelectorAll('input').forEach(input => input.value = "");
+  });
+
+  // Reload Button Action
+  reloadBtn.addEventListener('click', function () {
+    location.reload();
+  });
+
+  // Share as PNG
+  shareBtn.addEventListener('click', function () {
+    html2canvas(board).then(function (canvas) {
+      // Convert the canvas to a blob for sharing
+      canvas.toBlob(function (blob) {
+        if (navigator.canShare && navigator.canShare({ files: [blob] })) {
+          const file = new File([blob], "sudoku.png", { type: "image/png" });
+          const data = {
+            files: [file],
+            title: "Sudoku Game",
+            text: "Check out my Sudoku game!",
+            url: window.location.href, // Auto-fetch the current web URL
+          };
+
+          // Try to open the system's share functionality
+          navigator.share(data).catch(err => {
+            console.error("Error sharing", err);
+            alert("Your browser doesn't support sharing.");
+          });
+        } else {
+          alert("Sharing not supported on your browser.");
+        }
+      });
+    });
+  });
+});
+
+
+  </script>
+  
+</body>
+  </html>
+        
